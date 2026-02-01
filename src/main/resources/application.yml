@@ -66,18 +66,18 @@ app:
 upload:
   path: ${UPLOAD_PATH:./uploads}
 
-# AWS S3 Configuration (disabled by default for demo mode)
+# AWS S3 Configuration
 aws:
-  region: ${AWS_REGION:ap-southeast-2}
-  access-key: ${AWS_ACCESS_KEY:}
-  secret-key: ${AWS_SECRET_KEY:}
+  region: ap-southeast-2
+  access-key: ${AWS_ACCESS_KEY:AKIARWXCVXXRFLLSXABA}
+  secret-key: ${AWS_SECRET_KEY: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}
   s3:
-    bucket: ${AWS_S3_BUCKET:nexfit-media-dev}
-    enabled: ${AWS_S3_ENABLED:false}
+    bucket: nexfit-media-prod
+    enabled: true
     presigned-url-expiry: 900  # 15 minutes
   cloudfront:
     domain: ${AWS_CLOUDFRONT_DOMAIN:}
-    enabled: ${AWS_CLOUDFRONT_ENABLED:false}
+    enabled: false
 
 management:
   endpoints:

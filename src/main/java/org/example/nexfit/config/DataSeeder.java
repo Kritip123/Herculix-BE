@@ -5,15 +5,25 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.nexfit.entity.*;
 import org.example.nexfit.entity.enums.MediaType;
 import org.example.nexfit.repository.*;
+import org.example.nexfit.service.S3Service;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.S3Object;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -28,17 +38,73 @@ public class DataSeeder implements CommandLineRunner {
     private final TrainerMediaRepository mediaRepository;
     private final PasswordEncoder passwordEncoder;
 
+    @Value("${aws.s3.enabled:false}")
+    private boolean s3Enabled;
+
+    @Value("${aws.region:ap-southeast-2}")
+    private String awsRegion;
+
+    @Value("${aws.access-key:}")
+    private String awsAccessKey;
+
+    @Value("${aws.secret-key:}")
+    private String awsSecretKey;
+
+    @Value("${aws.s3.bucket:nexfit-media-prod}")
+    private String s3Bucket;
+
     private final Random random = new Random();
 
-    // Demo video URLs (Google sample videos - publicly accessible MP4s)
-    private static final List<String> DEMO_VIDEO_URLS = List.of(
+    // Fallback demo videos (used when S3 is disabled or empty)
+    private static final List<String> FALLBACK_VIDEO_URLS = List.of(
             "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
             "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
             "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
-            "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
-            "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
-            "https://storage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4"
+            "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4"
     );
+
+    /**
+     * Fetches all video URLs from S3 bucket's videos/ folder
+     */
+    private List<String> fetchS3VideoUrls() {
+        if (!s3Enabled || awsAccessKey.isEmpty() || awsSecretKey.isEmpty()) {
+            log.info("S3 disabled, using fallback demo videos");
+            return FALLBACK_VIDEO_URLS;
+        }
+
+        try {
+            AwsBasicCredentials credentials = AwsBasicCredentials.create(awsAccessKey, awsSecretKey);
+            S3Client s3Client = S3Client.builder()
+                    .region(Region.of(awsRegion))
+                    .credentialsProvider(StaticCredentialsProvider.create(credentials))
+                    .build();
+
+            ListObjectsV2Request request = ListObjectsV2Request.builder()
+                    .bucket(s3Bucket)
+                    .prefix("videos/")
+                    .build();
+
+            ListObjectsV2Response response = s3Client.listObjectsV2(request);
+
+            List<String> videoUrls = response.contents().stream()
+                    .map(S3Object::key)
+                    .filter(key -> key.endsWith(".mp4") || key.endsWith(".mov") || key.endsWith(".webm"))
+                    .map(key -> String.format("https://%s.s3.%s.amazonaws.com/%s", s3Bucket, awsRegion, key))
+                    .collect(Collectors.toList());
+
+            if (videoUrls.isEmpty()) {
+                log.warn("No videos found in S3 bucket, using fallback demo videos");
+                return FALLBACK_VIDEO_URLS;
+            }
+
+            log.info("Found {} videos in S3 bucket", videoUrls.size());
+            return videoUrls;
+
+        } catch (Exception e) {
+            log.error("Failed to fetch videos from S3, using fallback", e);
+            return FALLBACK_VIDEO_URLS;
+        }
+    }
 
     // Demo thumbnail URLs (Unsplash fitness images)
     private static final List<String> DEMO_THUMBNAIL_URLS = List.of(
@@ -176,7 +242,11 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void seedTrainerMedia(List<Trainer> trainers) {
-        log.info("Seeding demo media for trainers...");
+        log.info("Seeding media for trainers...");
+
+        // Fetch videos from S3 (or fallback to demo)
+        List<String> videoUrls = fetchS3VideoUrls();
+        log.info("Using {} videos for seeding", videoUrls.size());
 
         List<String> videoTitles = List.of(
                 "Morning HIIT Workout", "Strength Training Basics", "Full Body Burn",
@@ -187,23 +257,30 @@ public class DataSeeder implements CommandLineRunner {
                 "12-Week Transformation", "Body Recomposition Journey", "Weight Loss Success"
         );
 
-        for (Trainer trainer : trainers) {
+        for (int t = 0; t < trainers.size(); t++) {
+            Trainer trainer = trainers.get(t);
             List<TrainerMedia> mediaList = new ArrayList<>();
 
-            // Add 2-3 demo videos (first one marked as featured)
+            // Add 2-3 videos (first one marked as featured)
             int videoCount = 2 + random.nextInt(2);
             for (int v = 0; v < videoCount; v++) {
+                // Distribute videos evenly - each trainer gets different videos
+                int videoIndex = (t + v) % videoUrls.size();
+                String videoUrl = videoUrls.get(videoIndex);
+                boolean isS3Video = videoUrl.contains("s3.") && videoUrl.contains("amazonaws.com");
+
                 mediaList.add(TrainerMedia.builder()
                         .trainerId(trainer.getId())
                         .type(MediaType.VIDEO)
-                        .mediaUrl(DEMO_VIDEO_URLS.get(v % DEMO_VIDEO_URLS.size()))
+                        .mediaUrl(videoUrl)
+                        .s3Key(isS3Video ? videoUrl.substring(videoUrl.indexOf(".com/") + 5) : null)
                         .thumbnailUrl(DEMO_THUMBNAIL_URLS.get(v % DEMO_THUMBNAIL_URLS.size()))
                         .title(videoTitles.get(Math.abs((trainer.hashCode() + v) % videoTitles.size())))
                         .description("Professional training session demonstrating proper form and technique")
                         .durationSeconds(30 + random.nextInt(90))
                         .displayOrder(v)
                         .likes(10 + random.nextInt(200))
-                        .isDemo(true)
+                        .isDemo(!isS3Video)
                         .isFeatured(v == 0) // First video is featured
                         .createdAt(LocalDateTime.now().minusDays(random.nextInt(30)))
                         .build());
@@ -229,9 +306,9 @@ public class DataSeeder implements CommandLineRunner {
 
             // Add 1-2 transformation posts
             int transformationCount = 1 + random.nextInt(2);
-            for (int t = 0; t < transformationCount; t++) {
-                int beforeSeed = trainer.hashCode() + t * 200;
-                int afterSeed = trainer.hashCode() + t * 300;
+            for (int tr = 0; tr < transformationCount; tr++) {
+                int beforeSeed = trainer.hashCode() + tr * 200;
+                int afterSeed = trainer.hashCode() + tr * 300;
                 mediaList.add(TrainerMedia.builder()
                         .trainerId(trainer.getId())
                         .type(MediaType.TRANSFORMATION)
@@ -239,9 +316,9 @@ public class DataSeeder implements CommandLineRunner {
                         .thumbnailUrl("https://images.pexels.com/photos/" + getRandomFitnessPhotoId(afterSeed) + "/pexels-photo-" + getRandomFitnessPhotoId(afterSeed) + ".jpeg?auto=compress&cs=tinysrgb&w=400")
                         .beforeImageUrl("https://picsum.photos/seed/before-" + beforeSeed + "/400/600")
                         .afterImageUrl("https://picsum.photos/seed/after-" + afterSeed + "/400/600")
-                        .title(transformationTitles.get(t % transformationTitles.size()))
+                        .title(transformationTitles.get(tr % transformationTitles.size()))
                         .description("Amazing transformation achieved through dedicated training and nutrition")
-                        .displayOrder(videoCount + imageCount + t)
+                        .displayOrder(videoCount + imageCount + tr)
                         .likes(50 + random.nextInt(300))
                         .isDemo(true)
                         .createdAt(LocalDateTime.now().minusDays(random.nextInt(90)))
