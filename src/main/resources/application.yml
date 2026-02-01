@@ -3,11 +3,11 @@ spring:
     name: NexFit-BE
 
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:dev}
+    active: ${SPRING_PROFILES_ACTIVE:default}
 
   data:
     mongodb:
-      uri: ${MONGODB_URI:mongodb://localhost:27017/nexfit}
+      uri: "mongodb://nexfit-admin:newPassw0rd@ac-m1hrvkw-shard-00-00.voszrn1.mongodb.net:27017,ac-m1hrvkw-shard-00-01.voszrn1.mongodb.net:27017,ac-m1hrvkw-shard-00-02.voszrn1.mongodb.net:27017/nexfit?ssl=true&authSource=admin&retryWrites=true&w=majority"
       database: nexfit
       auto-index-creation: true
 
@@ -53,11 +53,11 @@ jwt:
 
 cors:
   allowed:
-    origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8081}
+    origins: "*"
     methods: GET,POST,PUT,DELETE,OPTIONS
     headers: "*"
   allow:
-    credentials: true
+    credentials: false
 
 app:
   currency: AUD
