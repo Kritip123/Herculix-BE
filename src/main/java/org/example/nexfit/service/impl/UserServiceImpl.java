@@ -18,9 +18,11 @@ import org.example.nexfit.repository.SavedTrainerRepository;
 import org.example.nexfit.repository.SkippedTrainerRepository;
 import org.example.nexfit.repository.TrainerRepository;
 import org.example.nexfit.repository.UserRepository;
+import org.example.nexfit.mapper.TrainerMapper;
+import org.example.nexfit.service.S3Service;
 import org.example.nexfit.service.UserService;
 import org.example.nexfit.util.DistanceCalculator;
-import org.example.nexfit.util.FileUploadUtil;
+import org.example.nexfit.util.S3KeyPrefixer;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -36,7 +38,9 @@ public class UserServiceImpl implements UserService {
     private final SavedTrainerRepository savedTrainerRepository;
     private final SkippedTrainerRepository skippedTrainerRepository;
     private final TrainerRepository trainerRepository;
-    private final FileUploadUtil fileUploadUtil;
+    private final S3Service s3Service;
+    private final S3KeyPrefixer s3KeyPrefixer;
+    private final TrainerMapper trainerMapper;
     
     @Override
     public UserDTO getCurrentUser(String userId) {
@@ -87,10 +91,16 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
         
         try {
-            String fileName = fileUploadUtil.saveFile("avatars", file);
-            user.setAvatar(fileName);
+            validateAvatarFile(file);
+            String extension = getFileExtension(file.getOriginalFilename());
+            String s3Key = String.format("users/%s/avatar/%s%s", user.getId(), UUID.randomUUID(), extension);
+            s3Key = s3KeyPrefixer.applyPrefix(s3Key);
+
+            s3Service.uploadObject(s3Key, file.getBytes(), file.getContentType());
+            String avatarUrl = s3Service.getMediaUrl(s3Key);
+            user.setAvatar(avatarUrl);
             userRepository.save(user);
-            return fileName;
+            return avatarUrl;
         } catch (Exception e) {
             log.error("Failed to upload avatar for user {}", userId, e);
             throw new BusinessException("Failed to upload avatar");
@@ -231,7 +241,7 @@ public class UserServiceImpl implements UserService {
         List<SavedTrainerWithDetails> sorted = sortSavedTrainers(detailedList, sortBy, latitude, longitude);
 
         return sorted.stream()
-                .map(this::buildSavedTrainerResponse)
+                .map(details -> buildSavedTrainerResponse(details, latitude, longitude))
                 .toList();
     }
 
@@ -273,7 +283,7 @@ public class UserServiceImpl implements UserService {
         return list.stream().sorted(comparator).toList();
     }
 
-    private SavedTrainerResponse buildSavedTrainerResponse(SavedTrainerWithDetails details) {
+    private SavedTrainerResponse buildSavedTrainerResponse(SavedTrainerWithDetails details, Double latitude, Double longitude) {
         Trainer t = details.trainer;
         return SavedTrainerResponse.builder()
                 .trainerId(details.saved.getTrainerId())
@@ -287,10 +297,41 @@ public class UserServiceImpl implements UserService {
                 .trainerSpecializations(t.getSpecializations())
                 .trainerCity(t.getCity())
                 .trainerExperience(t.getExperience())
+                .trainer(trainerMapper.toDto(t, latitude, longitude))
                 .build();
     }
 
     private record SavedTrainerWithDetails(SavedTrainer saved, Trainer trainer) {}
+
+    private void validateAvatarFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new BusinessException("File is empty");
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || !isValidImageType(contentType)) {
+            throw new BusinessException("Invalid file type. Only images are allowed");
+        }
+        if (file.getSize() > 10 * 1024 * 1024) {
+            throw new BusinessException("File size exceeds maximum limit of 10MB");
+        }
+    }
+
+    private boolean isValidImageType(String contentType) {
+        return contentType.equals("image/jpeg") ||
+               contentType.equals("image/jpg") ||
+               contentType.equals("image/png") ||
+               contentType.equals("image/gif") ||
+               contentType.equals("image/webp") ||
+               contentType.equals("image/heic") ||
+               contentType.equals("image/heif");
+    }
+
+    private String getFileExtension(String fileName) {
+        if (fileName == null || !fileName.contains(".")) {
+            return "";
+        }
+        return fileName.substring(fileName.lastIndexOf("."));
+    }
 
     @Override
     public void removeSavedTrainer(String userId, String trainerId) {

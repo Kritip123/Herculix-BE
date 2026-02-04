@@ -28,16 +28,22 @@ public class LaunchDarklyServiceImpl implements LaunchDarklyService {
 
     @PostConstruct
     public void init() {
-        if (enabled && sdkKey != null && !sdkKey.isBlank()) {
-            try {
-                ldClient = new LDClient(sdkKey);
-                log.info("LaunchDarkly client initialized");
-            } catch (Exception e) {
-                log.error("Failed to initialize LaunchDarkly client", e);
-                enabled = false;
-            }
-        } else {
-            log.info("LaunchDarkly disabled or SDK key not provided");
+        if (!enabled) {
+            log.info("LaunchDarkly disabled");
+            return;
+        }
+        if (sdkKey == null || sdkKey.isBlank()) {
+            log.warn("LaunchDarkly enabled but SDK key not provided. Disabling LaunchDarkly.");
+            enabled = false;
+            return;
+        }
+
+        try {
+            ldClient = new LDClient(sdkKey);
+            log.info("LaunchDarkly client initialized for flag {}", flagKey);
+        } catch (Exception e) {
+            log.error("Failed to initialize LaunchDarkly client", e);
+            enabled = false;
         }
     }
 
@@ -53,18 +59,23 @@ public class LaunchDarklyServiceImpl implements LaunchDarklyService {
     }
 
     @Override
-    public boolean isTrainerVerified(String trainerId) {
+    public boolean isTrainerVerified(String trainerEmail) {
         if (!enabled || ldClient == null) {
+            return false;
+        }
+        if (trainerEmail == null || trainerEmail.isBlank()) {
+            log.warn("LaunchDarkly evaluation skipped: trainer email is missing");
             return false;
         }
 
         try {
-            LDContext context = LDContext.builder(trainerId)
-                    .kind("trainer")
+            LDContext context = LDContext.builder(trainerEmail)
+                    .kind("user")
+                    .set("email", trainerEmail)
                     .build();
             return ldClient.boolVariation(flagKey, context, false);
         } catch (Exception e) {
-            log.error("LaunchDarkly evaluation failed for trainer {}", trainerId, e);
+            log.error("LaunchDarkly evaluation failed for trainer {}", trainerEmail, e);
             return false;
         }
     }

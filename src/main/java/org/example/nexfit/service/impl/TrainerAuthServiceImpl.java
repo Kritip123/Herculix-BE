@@ -60,6 +60,7 @@ public class TrainerAuthServiceImpl implements TrainerAuthService {
                 .id(trainer.getId())
                 .name(trainer.getName())
                 .email(trainer.getEmail())
+                .role("TRAINER")
                 .token(jwtToken)
                 .refreshToken(refreshToken)
                 .expiresIn(jwtService.getExpirationTime())
@@ -94,9 +95,16 @@ public class TrainerAuthServiceImpl implements TrainerAuthService {
                 .id(trainer.getId())
                 .name(trainer.getName())
                 .email(trainer.getEmail())
+                .role("TRAINER")
                 .token(jwtToken)
                 .refreshToken(refreshToken)
                 .expiresIn(jwtService.getExpirationTime())
                 .build();
+    }
+
+    @Override
+    public void logout(String token) {
+        // Stateless logout; client removes token
+        log.info("Trainer logged out");
     }
 }

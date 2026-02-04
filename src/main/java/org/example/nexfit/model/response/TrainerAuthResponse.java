@@ -13,6 +13,7 @@ public class TrainerAuthResponse {
     private String id;
     private String name;
     private String email;
+    private String role;
     private String token;
     private String refreshToken;
     private Long expiresIn;

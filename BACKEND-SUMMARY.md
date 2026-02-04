@@ -39,10 +39,10 @@ NexFit/
 │   ├── entity/              # Database Entities
 │   │   ├── Booking.java (MongoDB)
 │   │   ├── Notification.java (MongoDB)
-│   │   ├── Review.java (PostgreSQL)
-│   │   ├── Trainer.java (PostgreSQL)
+│   │   ├── Review.java (MongoDB)
+│   │   ├── Trainer.java (MongoDB)
 │   │   ├── TrainerAvailability.java (MongoDB)
-│   │   └── User.java (PostgreSQL)
+│   │   └── User.java (MongoDB)
 │   ├── exception/           # Exception Handling
 │   │   ├── BusinessException.java
 │   │   ├── ErrorResponse.java
@@ -81,38 +81,7 @@ NexFit/
 └── README-BACKEND.md       # Documentation
 ```
 
-## 🗄️ Database Schemas
-
-### PostgreSQL Tables
-
-**users**
-- id (UUID, PK)
-- name, email (unique), password, phone, avatar
-- role (USER/TRAINER/ADMIN), is_active, email_verified
-- reset_password_token, reset_password_token_expiry
-- created_at, updated_at
-
-**trainers**
-- id (UUID, PK)
-- name, email (unique), phone, profile_image, cover_image
-- experience, rating, review_count, hourly_rate
-- bio, instagram_id, gym_affiliation
-- location fields (latitude, longitude, address, city, state, country, zip_code)
-- statistics (total_clients, transformations, sessions_completed, years_active)
-- is_active, is_verified
-- created_at, updated_at
-
-**reviews**
-- id (UUID, PK)
-- trainer_id (FK), user_id (FK), booking_id (unique)
-- rating (1-5), comment
-- created_at, updated_at
-
-**Junction Tables**
-- user_favourite_trainers (user_id, trainer_id)
-- trainer_specializations (trainer_id, specialization)
-- trainer_certifications (trainer_id, certification)
-- trainer_languages (trainer_id, language)
+## 🗄️ Database Collections
 
 ### MongoDB Collections
 
@@ -186,13 +155,6 @@ curl http://localhost:8080/api/v1/actuator/health
 
 1. **Install databases**
 ```bash
-# PostgreSQL
-brew install postgresql
-brew services start postgresql
-createdb trainerhub
-psql -c "CREATE USER trainerhub WITH PASSWORD 'trainerhub123';"
-psql -c "GRANT ALL PRIVILEGES ON DATABASE trainerhub TO trainerhub;"
-
 # MongoDB
 brew install mongodb-community
 brew services start mongodb-community
@@ -237,7 +199,6 @@ mvn spring-boot:run
 ## ⚡ Performance & Scalability
 
 ### Implemented Optimizations
-- **Connection Pooling** (HikariCP for PostgreSQL)
 - **Database Indexing** on frequently queried fields
 - **Async Processing** for emails and notifications
 - **Redis Caching** for session management
@@ -305,7 +266,6 @@ EMAIL_USERNAME=noreply@trainerhub.com.au
 EMAIL_PASSWORD=app_specific_password
 
 # Database URLs (Required in production)
-DATABASE_URL=postgresql://...
 MONGODB_URI=mongodb://...
 REDIS_HOST=redis.trainerhub.com.au
 

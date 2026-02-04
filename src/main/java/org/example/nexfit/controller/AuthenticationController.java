@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.nexfit.model.request.AuthRequest;
 import org.example.nexfit.model.response.AuthResponse;
+import org.example.nexfit.exception.BusinessException;
 import org.example.nexfit.service.AuthenticationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +43,9 @@ public class AuthenticationController {
     @PostMapping("/logout")
     @Operation(summary = "User logout")
     public ResponseEntity<Void> logout(@RequestHeader("Authorization") String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new BusinessException("Invalid Authorization header");
+        }
         String token = authHeader.substring(7); // Remove "Bearer " prefix
         authenticationService.logout(token);
         return ResponseEntity.noContent().build();

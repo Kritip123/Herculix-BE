@@ -8,10 +8,7 @@ NexFit is a comprehensive fitness trainer marketplace application built for the 
 
 - **Framework**: Spring Boot 4.0.0
 - **Language**: Java 17
-- **Databases**: 
-  - PostgreSQL (User data, Trainer profiles, Reviews)
-  - MongoDB (Bookings, Availability, Notifications)
-  - Redis (Session management, Distributed locking)
+- **Database**: MongoDB
 - **Authentication**: JWT with Spring Security
 - **Payment**: Stripe API
 - **Email**: Spring Mail with Gmail SMTP
@@ -38,76 +35,7 @@ src/main/java/org/example/trainerhub/
 └── mapper/         # Entity-DTO mappers
 ```
 
-## 📊 Database Schemas
-
-### PostgreSQL Schema
-
-#### Users Table
-```sql
-CREATE TABLE users (
-    id VARCHAR(255) PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    phone VARCHAR(20),
-    avatar TEXT,
-    role VARCHAR(50) DEFAULT 'USER',
-    is_active BOOLEAN DEFAULT true,
-    email_verified BOOLEAN DEFAULT false,
-    reset_password_token VARCHAR(255),
-    reset_password_token_expiry TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-#### Trainers Table
-```sql
-CREATE TABLE trainers (
-    id VARCHAR(255) PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    phone VARCHAR(20),
-    profile_image TEXT,
-    cover_image TEXT,
-    experience INTEGER,
-    rating DECIMAL(3,2) DEFAULT 0,
-    review_count INTEGER DEFAULT 0,
-    hourly_rate DECIMAL(10,2) NOT NULL,
-    bio TEXT,
-    instagram_id VARCHAR(100),
-    latitude DOUBLE PRECISION,
-    longitude DOUBLE PRECISION,
-    address VARCHAR(500),
-    city VARCHAR(100),
-    state VARCHAR(100),
-    country VARCHAR(100) DEFAULT 'Australia',
-    zip_code VARCHAR(10),
-    gym_affiliation VARCHAR(255),
-    total_clients INTEGER DEFAULT 0,
-    transformations INTEGER DEFAULT 0,
-    sessions_completed INTEGER DEFAULT 0,
-    years_active INTEGER DEFAULT 0,
-    is_active BOOLEAN DEFAULT true,
-    is_verified BOOLEAN DEFAULT false,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-#### Reviews Table
-```sql
-CREATE TABLE reviews (
-    id VARCHAR(255) PRIMARY KEY,
-    trainer_id VARCHAR(255) REFERENCES trainers(id),
-    user_id VARCHAR(255) REFERENCES users(id),
-    booking_id VARCHAR(255) UNIQUE NOT NULL,
-    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
-    comment TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
+## 📊 Database Collections
 
 ### MongoDB Collections
 
@@ -231,6 +159,14 @@ STRIPE_API_KEY=your_stripe_secret_key
 STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
 EMAIL_USERNAME=your_email@gmail.com
 EMAIL_PASSWORD=your_app_specific_password
+AWS_ACCESS_KEY=your_aws_access_key
+AWS_SECRET_KEY=your_aws_secret_key
+AWS_S3_BUCKET=your_s3_bucket
+AWS_REGION=ap-southeast-2
+AWS_S3_PREFIX=dev
+LAUNCHDARKLY_ENABLED=true
+LAUNCHDARKLY_SDK_KEY=your_launchdarkly_sdk_key
+LAUNCHDARKLY_FLAG_KEY=verified-trainers
 ```
 
 ### Local Development Setup
@@ -249,9 +185,7 @@ docker-compose up -d
 ```
 
 This will start:
-- PostgreSQL on port 5432
 - MongoDB on port 27017
-- Redis on port 6379
 - Spring Boot application on port 8080
 
 3. **Check application health**
@@ -261,25 +195,15 @@ curl http://localhost:8080/api/v1/actuator/health
 
 #### Option 2: Manual Setup
 
-1. **Install and start databases**
+1. **Install and start MongoDB**
 ```bash
-# PostgreSQL
-brew install postgresql
-brew services start postgresql
-createdb trainerhub
-createuser trainerhub
-
 # MongoDB
 brew install mongodb-community
 brew services start mongodb-community
-
-# Redis
-brew install redis
-brew services start redis
 ```
 
 2. **Configure database credentials**
-Update `application.properties` with your local database credentials
+Update `application.yml` with your local MongoDB credentials
 
 3. **Build and run the application**
 ```bash
@@ -289,16 +213,7 @@ mvn spring-boot:run
 
 ### Database Initialization
 
-The application uses Hibernate's auto-update for PostgreSQL schemas. MongoDB collections are created automatically.
-
-To seed initial data (optional):
-```bash
-# Connect to PostgreSQL
-psql -U trainerhub -d trainerhub
-
-# Run seed script (create one based on your needs)
-\i database/seed.sql
-```
+MongoDB collections are created automatically.
 
 ## 🧪 Testing
 
@@ -345,7 +260,6 @@ mvn clean package -P production
 docker build -t trainerhub-backend .
 docker run -p 8080:8080 \
   -e SPRING_PROFILES_ACTIVE=production \
-  -e DATABASE_URL=$DATABASE_URL \
   -e MONGODB_URI=$MONGODB_URI \
   trainerhub-backend
 ```

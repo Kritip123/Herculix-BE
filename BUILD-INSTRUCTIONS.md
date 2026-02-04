@@ -20,19 +20,13 @@ docker-compose up -d
 
 #### Option B: Manual with Local Databases
 ```bash
-# 1. Start PostgreSQL
-brew services start postgresql
-createdb trainerhub
-psql -c "CREATE USER trainerhub WITH PASSWORD 'trainerhub123';"
-psql -c "GRANT ALL PRIVILEGES ON DATABASE trainerhub TO trainerhub;"
-
-# 2. Start MongoDB
+# 1. Start MongoDB
 brew services start mongodb-community
 
-# 3. Start Redis
+# 2. Start Redis
 brew services start redis
 
-# 4. Run the application
+# 3. Run the application
 ./mvnw spring-boot:run
 ```
 
@@ -68,9 +62,6 @@ docker info
 Make sure all required services are running:
 
 ```bash
-# Check PostgreSQL
-pg_isready -h localhost -p 5432
-
 # Check MongoDB
 mongosh --eval "db.runCommand({ ping: 1 })"
 
@@ -135,6 +126,14 @@ Required variables:
 - `STRIPE_API_KEY` - Your Stripe secret key
 - `EMAIL_USERNAME` - Gmail address for sending emails
 - `EMAIL_PASSWORD` - Gmail app-specific password
+- `AWS_ACCESS_KEY` - AWS access key for S3 uploads
+- `AWS_SECRET_KEY` - AWS secret key for S3 uploads
+- `AWS_S3_BUCKET` - S3 bucket name
+- `AWS_S3_PREFIX` - S3 prefix (dev or prod)
+- `LAUNCHDARKLY_ENABLED` - Enable LaunchDarkly (true/false)
+- `LAUNCHDARKLY_SDK_KEY` - LaunchDarkly server-side SDK key
+- `LAUNCHDARKLY_FLAG_KEY` - LaunchDarkly flag key (default: verified-trainers)
+- `MEDIA_SYNC_ON_STARTUP` - Sync trainer media from S3 (true/false)
 
 ## 🚀 Quick Start (Minimal Setup)
 

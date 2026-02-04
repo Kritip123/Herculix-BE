@@ -12,6 +12,7 @@ import org.example.nexfit.model.response.UploadUrlResponse;
 import org.example.nexfit.repository.TrainerMediaRepository;
 import org.example.nexfit.service.S3Service;
 import org.example.nexfit.service.TrainerMediaService;
+import org.example.nexfit.util.S3KeyPrefixer;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -26,6 +27,7 @@ public class TrainerMediaServiceImpl implements TrainerMediaService {
     private final TrainerMediaRepository mediaRepository;
     private final S3Service s3Service;
     private final TrainerRepository trainerRepository;
+    private final S3KeyPrefixer s3KeyPrefixer;
 
     @Override
     public List<TrainerMedia> getTrainerMedia(String trainerId) {
@@ -46,6 +48,7 @@ public class TrainerMediaServiceImpl implements TrainerMediaService {
                 folder,
                 UUID.randomUUID(),
                 extension);
+        s3Key = s3KeyPrefixer.applyPrefix(s3Key);
 
         return s3Service.generatePresignedUploadUrl(s3Key, request.getContentType());
     }

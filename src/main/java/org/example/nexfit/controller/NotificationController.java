@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.example.nexfit.entity.Notification;
 import org.example.nexfit.entity.User;
+import org.example.nexfit.exception.ResourceNotFoundException;
 import org.example.nexfit.model.response.PageResponse;
 import org.example.nexfit.repository.UserRepository;
 import org.example.nexfit.service.NotificationService;
@@ -33,7 +34,7 @@ public class NotificationController {
             @RequestParam(defaultValue = "10") int limit
     ) {
         User user = userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User", userDetails.getUsername()));
         return ResponseEntity.ok(notificationService.getUserNotifications(user.getId(), PageRequest.of(page, limit)));
     }
     
@@ -44,7 +45,7 @@ public class NotificationController {
             @PathVariable String id
     ) {
         User user = userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User", userDetails.getUsername()));
         notificationService.markAsRead(id, user.getId());
         return ResponseEntity.ok(Map.of("message", "Notification marked as read"));
     }
@@ -53,7 +54,7 @@ public class NotificationController {
     @Operation(summary = "Mark all notifications as read")
     public ResponseEntity<Map<String, String>> markAllAsRead(@AuthenticationPrincipal UserDetails userDetails) {
         User user = userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User", userDetails.getUsername()));
         notificationService.markAllAsRead(user.getId());
         return ResponseEntity.ok(Map.of("message", "All notifications marked as read"));
     }
@@ -65,7 +66,7 @@ public class NotificationController {
             @PathVariable String id
     ) {
         User user = userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User", userDetails.getUsername()));
         notificationService.deleteNotification(id, user.getId());
         return ResponseEntity.ok(Map.of("message", "Notification deleted"));
     }
@@ -74,8 +75,8 @@ public class NotificationController {
     @Operation(summary = "Get unread notification count")
     public ResponseEntity<Map<String, Long>> getUnreadCount(@AuthenticationPrincipal UserDetails userDetails) {
         User user = userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User", userDetails.getUsername()));
         long count = notificationService.getUnreadCount(user.getId());
-        return ResponseEntity.ok(Map.of("unreadCount", count));
+        return ResponseEntity.ok(Map.of("count", count));
     }
 }

@@ -9,6 +9,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Set;
 
+import org.example.nexfit.model.dto.TrainerDTO;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -27,4 +29,6 @@ public class SavedTrainerResponse {
     private Set<String> trainerSpecializations;
     private String trainerCity;
     private Integer trainerExperience;
+
+    private TrainerDTO trainer;
 }

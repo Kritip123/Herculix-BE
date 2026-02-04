@@ -35,10 +35,16 @@ services:
       SPRING_DATA_MONGODB_URI: mongodb://admin:admin123@mongodb:27017/nexfit?authSource=admin
       EMAIL_USERNAME: ${EMAIL_USERNAME}
       EMAIL_PASSWORD: ${EMAIL_PASSWORD}
-      AWS_S3_ENABLED: ${AWS_S3_ENABLED:-false}
+      AWS_S3_ENABLED: ${AWS_S3_ENABLED:-true}
       AWS_ACCESS_KEY: ${AWS_ACCESS_KEY:-}
       AWS_SECRET_KEY: ${AWS_SECRET_KEY:-}
       AWS_S3_BUCKET: ${AWS_S3_BUCKET:-nexfit-media-dev}
+      AWS_S3_PREFIX: ${AWS_S3_PREFIX:-dev}
+      AWS_REGION: ${AWS_REGION:-ap-southeast-2}
+      LAUNCHDARKLY_ENABLED: ${LAUNCHDARKLY_ENABLED:-true}
+      LAUNCHDARKLY_SDK_KEY: ${LAUNCHDARKLY_SDK_KEY:-}
+      LAUNCHDARKLY_FLAG_KEY: ${LAUNCHDARKLY_FLAG_KEY:-verified-trainers}
+      MEDIA_SYNC_ON_STARTUP: ${MEDIA_SYNC_ON_STARTUP:-false}
     volumes:
       - ./uploads:/app/uploads
     networks:

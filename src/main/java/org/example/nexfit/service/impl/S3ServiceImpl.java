@@ -1,17 +1,23 @@
 package org.example.nexfit.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import org.example.nexfit.exception.BusinessException;
 import org.example.nexfit.model.response.UploadUrlResponse;
 import org.example.nexfit.service.S3Service;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
@@ -26,6 +32,9 @@ public class S3ServiceImpl implements S3Service {
 
     @Value("${aws.s3.enabled:false}")
     private boolean enabled;
+
+    @Value("${aws.s3.required:true}")
+    private boolean required;
 
     @Value("${aws.region:ap-southeast-2}")
     private String region;
@@ -53,28 +62,45 @@ public class S3ServiceImpl implements S3Service {
 
     @PostConstruct
     public void init() {
-        if (enabled && !accessKey.isEmpty() && !secretKey.isEmpty()) {
-            try {
-                AwsBasicCredentials credentials = AwsBasicCredentials.create(accessKey, secretKey);
-                StaticCredentialsProvider credentialsProvider = StaticCredentialsProvider.create(credentials);
-
-                this.s3Client = S3Client.builder()
-                        .region(Region.of(region))
-                        .credentialsProvider(credentialsProvider)
-                        .build();
-
-                this.s3Presigner = S3Presigner.builder()
-                        .region(Region.of(region))
-                        .credentialsProvider(credentialsProvider)
-                        .build();
-
-                log.info("S3 service initialized successfully with bucket: {}", bucket);
-            } catch (Exception e) {
-                log.error("Failed to initialize S3 service", e);
-                enabled = false;
+        if (required && !enabled) {
+            throw new IllegalStateException("S3 is required but aws.s3.enabled is false");
+        }
+        if (!enabled) {
+            log.info("S3 service is disabled.");
+            return;
+        }
+        if (accessKey.isEmpty() || secretKey.isEmpty()) {
+            String message = "Missing AWS credentials for S3. Check AWS_ACCESS_KEY and AWS_SECRET_KEY.";
+            if (required) {
+                throw new IllegalStateException(message);
             }
-        } else {
-            log.info("S3 service is disabled. Using demo mode with placeholder URLs.");
+            log.error(message);
+            enabled = false;
+            return;
+        }
+
+        try {
+            AwsBasicCredentials credentials = AwsBasicCredentials.create(accessKey, secretKey);
+            StaticCredentialsProvider credentialsProvider = StaticCredentialsProvider.create(credentials);
+
+            this.s3Client = S3Client.builder()
+                    .region(Region.of(region))
+                    .credentialsProvider(credentialsProvider)
+                    .build();
+
+            this.s3Presigner = S3Presigner.builder()
+                    .region(Region.of(region))
+                    .credentialsProvider(credentialsProvider)
+                    .build();
+
+            this.s3Client.headBucket(HeadBucketRequest.builder().bucket(bucket).build());
+            log.info("S3 service initialized successfully with bucket: {}", bucket);
+        } catch (Exception e) {
+            log.error("Failed to initialize S3 service", e);
+            enabled = false;
+            if (required) {
+                throw new IllegalStateException("S3 initialization failed. Check credentials and bucket access.", e);
+            }
         }
     }
 
@@ -86,7 +112,7 @@ public class S3ServiceImpl implements S3Service {
     @Override
     public UploadUrlResponse generatePresignedUploadUrl(String key, String contentType) {
         if (!isEnabled()) {
-            throw new IllegalStateException("S3 service is not enabled");
+            throw new BusinessException("S3 service is not enabled or not initialized");
         }
 
         PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
@@ -152,5 +178,47 @@ public class S3ServiceImpl implements S3Service {
             log.error("Failed to check if S3 object exists: {}", s3Key, e);
             return false;
         }
+    }
+
+    @Override
+    public void uploadObject(String s3Key, byte[] content, String contentType) {
+        if (!isEnabled()) {
+            throw new BusinessException("S3 service is not enabled or not initialized");
+        }
+        try {
+            s3Client.putObject(
+                    PutObjectRequest.builder()
+                            .bucket(bucket)
+                            .key(s3Key)
+                            .contentType(contentType)
+                            .build(),
+                    RequestBody.fromBytes(content)
+            );
+        } catch (Exception e) {
+            log.error("Failed to upload S3 object: {}", s3Key, e);
+            throw new BusinessException("Failed to upload file to S3");
+        }
+    }
+
+    @Override
+    public java.util.List<String> listKeys(String prefix) {
+        if (!isEnabled()) {
+            throw new BusinessException("S3 service is not enabled or not initialized");
+        }
+
+        java.util.List<String> keys = new java.util.ArrayList<>();
+        String continuationToken = null;
+        do {
+            ListObjectsV2Request request = ListObjectsV2Request.builder()
+                    .bucket(bucket)
+                    .prefix(prefix)
+                    .continuationToken(continuationToken)
+                    .build();
+            ListObjectsV2Response response = s3Client.listObjectsV2(request);
+            response.contents().forEach(obj -> keys.add(obj.key()));
+            continuationToken = response.nextContinuationToken();
+        } while (continuationToken != null && !continuationToken.isBlank());
+
+        return keys;
     }
 }

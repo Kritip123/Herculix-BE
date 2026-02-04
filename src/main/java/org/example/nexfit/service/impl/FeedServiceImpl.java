@@ -86,13 +86,43 @@ public class FeedServiceImpl implements FeedService {
         int explorationCount = (int) (request.getSize() * EXPLORATION_MIX_RATIO);
         List<ScoredTrainer> finalList = addExplorationMix(scoredTrainers, explorationCount, seededRandom);
 
+        // Build round-robin video feed list (one video per trainer per cycle)
+        List<String> trainerIds = finalList.stream().map(st -> st.trainer.getId()).toList();
+        Map<String, List<TrainerMedia>> mediaMap = mediaRepository.findByTrainerIdInOrderByDisplayOrderAsc(trainerIds)
+                .stream().collect(Collectors.groupingBy(TrainerMedia::getTrainerId));
+
+        Map<String, List<TrainerMedia>> videoMap = new LinkedHashMap<>();
+        for (ScoredTrainer scored : finalList) {
+            List<TrainerMedia> videos = mediaMap.getOrDefault(scored.trainer.getId(), List.of()).stream()
+                    .filter(media -> media.getType() == MediaType.VIDEO)
+                    .sorted(videoComparator())
+                    .collect(Collectors.toCollection(ArrayList::new));
+            if (!videos.isEmpty()) {
+                videoMap.put(scored.trainer.getId(), videos);
+            }
+        }
+
+        List<ScoredTrainerVideo> roundRobin = new ArrayList<>();
+        boolean added;
+        do {
+            added = false;
+            for (ScoredTrainer scored : finalList) {
+                List<TrainerMedia> videos = videoMap.get(scored.trainer.getId());
+                if (videos != null && !videos.isEmpty()) {
+                    TrainerMedia nextVideo = videos.remove(0);
+                    roundRobin.add(new ScoredTrainerVideo(scored.trainer, scored.score, nextVideo));
+                    added = true;
+                }
+            }
+        } while (added);
+
         // Pagination
+        int totalCount = roundRobin.size();
+        int totalPages = (int) Math.ceil((double) totalCount / request.getSize());
         int start = request.getPage() * request.getSize();
-        int end = Math.min(start + request.getSize(), finalList.size());
+        int end = Math.min(start + request.getSize(), totalCount);
 
-        int totalPages = (int) Math.ceil((double) finalList.size() / request.getSize());
-
-        if (start >= finalList.size()) {
+        if (start >= totalCount) {
             return FeedResponse.builder()
                     .trainers(Collections.emptyList())
                     .sessionId(request.getSessionId() != null ? request.getSessionId() : UUID.randomUUID().toString())
@@ -100,23 +130,18 @@ public class FeedServiceImpl implements FeedService {
                     .page(request.getPage())
                     .limit(request.getSize())
                     .hasMore(false)
-                    .totalCount(finalList.size())
+                    .totalCount(totalCount)
                     .totalPages(totalPages)
                     .build();
         }
 
-        List<ScoredTrainer> pageTrainers = finalList.subList(start, end);
-
-        // Get media for trainers
-        List<String> trainerIds = pageTrainers.stream().map(st -> st.trainer.getId()).toList();
-        Map<String, List<TrainerMedia>> mediaMap = mediaRepository.findByTrainerIdInOrderByDisplayOrderAsc(trainerIds)
-                .stream().collect(Collectors.groupingBy(TrainerMedia::getTrainerId));
+        List<ScoredTrainerVideo> pageVideos = roundRobin.subList(start, end);
 
         // Convert to feed cards
         Double finalUserLat = userLat;
         Double finalUserLng = userLng;
-        List<TrainerFeedCard> feedCards = pageTrainers.stream()
-                .map(st -> convertToFeedCard(st.trainer, st.score, mediaMap.get(st.trainer.getId()), finalUserLat, finalUserLng))
+        List<TrainerFeedCard> feedCards = pageVideos.stream()
+                .map(stv -> convertToFeedCard(stv.trainer, stv.score, List.of(stv.media), finalUserLat, finalUserLng))
                 .toList();
 
         // Log first trainer for debugging
@@ -144,8 +169,8 @@ public class FeedServiceImpl implements FeedService {
                 .seed(seed)
                 .page(request.getPage())
                 .limit(request.getSize())
-                .hasMore(end < finalList.size())
-                .totalCount(finalList.size())
+                .hasMore(end < totalCount)
+                .totalCount(totalCount)
                 .totalPages(totalPages)
                 .build();
     }
@@ -343,4 +368,12 @@ public class FeedServiceImpl implements FeedService {
     }
 
     private record ScoredTrainer(Trainer trainer, int score) {}
+
+    private record ScoredTrainerVideo(Trainer trainer, int score, TrainerMedia media) {}
+
+    private Comparator<TrainerMedia> videoComparator() {
+        return Comparator
+                .comparing((TrainerMedia media) -> Boolean.TRUE.equals(media.getIsFeatured()) ? 0 : 1)
+                .thenComparing(media -> media.getDisplayOrder() != null ? media.getDisplayOrder() : Integer.MAX_VALUE);
+    }
 }

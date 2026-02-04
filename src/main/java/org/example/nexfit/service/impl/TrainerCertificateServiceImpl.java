@@ -13,6 +13,7 @@ import org.example.nexfit.repository.TrainerCertificateRepository;
 import org.example.nexfit.repository.TrainerRepository;
 import org.example.nexfit.service.S3Service;
 import org.example.nexfit.service.TrainerCertificateService;
+import org.example.nexfit.util.S3KeyPrefixer;
 import org.springframework.stereotype.Service;
 
 import java.util.Set;
@@ -33,6 +34,7 @@ public class TrainerCertificateServiceImpl implements TrainerCertificateService 
     private final TrainerRepository trainerRepository;
     private final TrainerCertificateRepository certificateRepository;
     private final S3Service s3Service;
+    private final S3KeyPrefixer s3KeyPrefixer;
 
     @Override
     public TrainerUploadUrlResponse generateUploadUrl(String trainerId, TrainerCertificateUploadUrlRequest request) {
@@ -49,6 +51,7 @@ public class TrainerCertificateServiceImpl implements TrainerCertificateService 
                 UUID.randomUUID(),
                 extension
         );
+        s3Key = s3KeyPrefixer.applyPrefix(s3Key);
 
         var upload = s3Service.generatePresignedUploadUrl(s3Key, request.getContentType());
         return TrainerUploadUrlResponse.builder()

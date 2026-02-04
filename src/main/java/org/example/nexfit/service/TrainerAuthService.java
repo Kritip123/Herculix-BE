@@ -8,4 +8,6 @@ public interface TrainerAuthService {
     TrainerAuthResponse register(TrainerAuthRequest.RegisterRequest request);
 
     TrainerAuthResponse login(TrainerAuthRequest.LoginRequest request);
+
+    void logout(String token);
 }

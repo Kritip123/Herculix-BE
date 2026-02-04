@@ -1,5 +1,6 @@
 package org.example.nexfit.model.request;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -10,6 +11,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -36,5 +38,21 @@ public class TrainerProfileCreateRequest {
 
         @NotBlank(message = "City is required")
         private String city;
+
+        private String headline;
+
+        private String bio;
+
+        private String profileImage;
+
+        private String coverImage;
+
+        private java.util.List<String> specializations;
+
+        private Integer yearsActive;
+
+        private java.util.List<String> languages;
+
+        private TrainerProfileUpdateRequest.Pricing pricing;
     }
 }

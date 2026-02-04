@@ -164,28 +164,27 @@ public class TrainerController {
 
     @GetMapping("/{id}/availability")
     @Operation(summary = "Get trainer availability")
-    public ResponseEntity<?> getTrainerAvailability(
+    public ResponseEntity<TrainerAvailabilityResponse> getTrainerAvailability(
             @PathVariable String id,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
         trainerService.getTrainerById(id);
         if (date == null) {
-            date = LocalDate.now();
+            LocalDate today = LocalDate.now();
+            Map<String, List<String>> weeklyAvailability = trainerService.getTrainerAvailability(id, today);
+            return ResponseEntity.ok(TrainerAvailabilityResponse.builder()
+                    .date(today.toString())
+                    .weekly(weeklyAvailability)
+                    .slots(null)
+                    .build());
         }
 
-        // Check if requesting specific date or weekly availability
-        if (date.equals(LocalDate.now())) {
-            // Return weekly availability
-            Map<String, List<String>> weeklyAvailability = trainerService.getTrainerAvailability(id, date);
-            return ResponseEntity.ok(weeklyAvailability);
-        } else {
-            // Return specific date availability
-            List<String> slots = trainerService.getAvailableTimeSlots(id, date);
-            return ResponseEntity.ok(Map.of(
-                    "date", date.toString(),
-                    "slots", slots
-            ));
-        }
+        List<String> slots = trainerService.getAvailableTimeSlots(id, date);
+        return ResponseEntity.ok(TrainerAvailabilityResponse.builder()
+                .date(date.toString())
+                .weekly(null)
+                .slots(slots)
+                .build());
     }
 
     @GetMapping("/{id}/reviews")

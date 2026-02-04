@@ -186,6 +186,7 @@ public class TrainerProfileServiceImpl implements TrainerProfileService {
 
         return TrainerProfileResponse.builder()
                 .id(trainer.getId())
+                .userId(trainer.getId())
                 .status(status.name().toLowerCase())
                 .profile(TrainerProfileResponse.Profile.builder()
                         .fullName(trainer.getName())

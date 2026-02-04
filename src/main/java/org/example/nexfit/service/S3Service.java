@@ -13,4 +13,8 @@ public interface S3Service {
     void deleteObject(String s3Key);
 
     boolean objectExists(String s3Key);
+
+    void uploadObject(String s3Key, byte[] content, String contentType);
+
+    java.util.List<String> listKeys(String prefix);
 }

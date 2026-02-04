@@ -6,6 +6,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface TrainerMediaRepository extends MongoRepository<TrainerMedia, String> {
@@ -24,4 +25,6 @@ public interface TrainerMediaRepository extends MongoRepository<TrainerMedia, St
     void deleteByTrainerId(String trainerId);
 
     List<TrainerMedia> findByTrainerIdAndIsDemoTrue(String trainerId);
+
+    Optional<TrainerMedia> findByS3Key(String s3Key);
 }

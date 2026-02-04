@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.nexfit.entity.Trainer;
 import org.example.nexfit.entity.TrainerAvailability;
 import org.example.nexfit.exception.ResourceNotFoundException;
+import org.example.nexfit.mapper.TrainerMapper;
 import org.example.nexfit.model.dto.ReviewDTO;
 import org.example.nexfit.model.dto.TrainerDTO;
 import org.example.nexfit.model.request.TrainerSearchRequest;
@@ -39,6 +40,7 @@ public class TrainerServiceImpl implements TrainerService {
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
     private final TrainerVisibilityService visibilityService;
+    private final TrainerMapper trainerMapper;
     
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("h:mm a");
     
@@ -51,7 +53,7 @@ public class TrainerServiceImpl implements TrainerService {
         trainers = applySearchFilters(trainers, request);
 
         List<TrainerDTO> trainerDTOs = trainers.stream()
-                .map(trainer -> convertToDTO(trainer, request.getLatitude(), request.getLongitude()))
+                .map(trainer -> trainerMapper.toDto(trainer, request.getLatitude(), request.getLongitude()))
                 .collect(Collectors.toList());
 
         if (request.getSortBy() != null) {
@@ -70,7 +72,7 @@ public class TrainerServiceImpl implements TrainerService {
             throw new ResourceNotFoundException("Trainer not found or inactive");
         }
         
-        return convertToDTO(trainer, null, null);
+        return trainerMapper.toDto(trainer);
     }
     
     @Override
@@ -199,67 +201,6 @@ public class TrainerServiceImpl implements TrainerService {
                 .build();
     }
     
-    private TrainerDTO convertToDTO(Trainer trainer, Double userLat, Double userLng) {
-        TrainerDTO.TrainerDTOBuilder dtoBuilder = TrainerDTO.builder()
-            .id(trainer.getId())
-            .name(trainer.getName())
-            .email(trainer.getEmail())
-            .phone(trainer.getPhone())
-            .profileImage(trainer.getProfileImage())
-            .coverImage(trainer.getCoverImage())
-            .specializations(trainer.getSpecializations())
-            .experience(trainer.getExperience())
-            .rating(trainer.getRating())
-            .reviewCount(trainer.getReviewCount())
-            .hourlyRate(trainer.getHourlyRate())
-            .bio(trainer.getBio())
-            .certifications(trainer.getCertifications())
-            .instagramId(trainer.getInstagramId())
-            .languages(trainer.getLanguages())
-            .gymAffiliation(trainer.getGymAffiliation())
-            .gallery(trainer.getGallery() != null
-                    ? trainer.getGallery().stream().map(Trainer.TrainerImage::getUrl).toList()
-                    : List.of())
-            .location(TrainerDTO.LocationDTO.builder()
-                .latitude(trainer.getLatitude())
-                .longitude(trainer.getLongitude())
-                .address(trainer.getAddress())
-                .city(trainer.getCity())
-                .state(trainer.getState())
-                .country(trainer.getCountry())
-                .zipCode(trainer.getZipCode())
-                .build())
-            .stats(TrainerDTO.StatsDTO.builder()
-                .totalClients(trainer.getTotalClients())
-                .transformations(trainer.getTransformations())
-                .sessionsCompleted(trainer.getSessionsCompleted())
-                .yearsActive(trainer.getYearsActive())
-                .build())
-            .whatsapp(trainer.getWhatsapp())
-            .website(trainer.getWebsite())
-            .contactMethods(trainer.getContactMethods() != null
-                    ? trainer.getContactMethods().stream()
-                        .map(cm -> TrainerDTO.ContactMethodDTO.builder()
-                            .type(cm.getType())
-                            .value(cm.getValue())
-                            .label(cm.getLabel())
-                            .isPrimary(cm.getIsPrimary())
-                            .build())
-                        .toList()
-                    : List.of());
-
-        // Calculate distance if user location is provided
-        if (userLat != null && userLng != null && trainer.getLatitude() != null && trainer.getLongitude() != null) {
-            double distance = DistanceCalculator.calculateDistance(
-                userLat, userLng,
-                trainer.getLatitude(), trainer.getLongitude()
-            );
-            dtoBuilder.distance(distance);
-        }
-        
-        return dtoBuilder.build();
-    }
-
     private List<Trainer> applySearchFilters(List<Trainer> trainers, TrainerSearchRequest request) {
         if (request.getSearch() != null && !request.getSearch().isBlank()) {
             String searchLower = request.getSearch().toLowerCase();
@@ -393,7 +334,7 @@ public class TrainerServiceImpl implements TrainerService {
             reasons.add("Top rated (" + trainer.getRating() + " stars)");
         }
 
-        TrainerDTO dto = convertToDTO(trainer, request.getLatitude(), request.getLongitude());
+        TrainerDTO dto = trainerMapper.toDto(trainer, request.getLatitude(), request.getLongitude());
         return MatchedTrainerResponse.builder()
                 .trainer(dto)
                 .matchPercentage(Math.min(score, 100))

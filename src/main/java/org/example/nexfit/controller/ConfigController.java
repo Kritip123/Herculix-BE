@@ -14,6 +14,7 @@ import org.example.nexfit.repository.TrainerMediaRepository;
 import org.example.nexfit.repository.TrainerRepository;
 import org.example.nexfit.repository.TrainingCategoryRepository;
 import org.example.nexfit.repository.TrainingSubcategoryRepository;
+import org.example.nexfit.service.S3Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -38,6 +39,7 @@ public class ConfigController {
     private final TrainingSubcategoryRepository subcategoryRepository;
     private final TrainerRepository trainerRepository;
     private final TrainerMediaRepository mediaRepository;
+    private final S3Service s3Service;
 
     @Value("${app.currency}")
     private String currency;
@@ -157,7 +159,7 @@ public class ConfigController {
 
         // Add feature flags
         settings.put("features", Map.of(
-                "s3Enabled", false, // Will be dynamically set based on config
+                "s3Enabled", s3Service.isEnabled(),
                 "analyticsEnabled", true,
                 "feedEnabled", true,
                 "comparisonEnabled", true

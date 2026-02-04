@@ -16,6 +16,7 @@ import java.util.List;
 public class TrainerProfileResponse {
 
     private String id;
+    private String userId;
     private String status;
     private Profile profile;
     private List<CertificateInfo> certificates;

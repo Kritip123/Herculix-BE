@@ -68,8 +68,9 @@ launchdarkly:
   sdk-key: ${LAUNCHDARKLY_SDK_KEY:}
   flag-key: ${LAUNCHDARKLY_FLAG_KEY:verified-trainers}
 
-upload:
-  path: ${UPLOAD_PATH:./uploads}
+media:
+  sync:
+    on-startup: ${MEDIA_SYNC_ON_STARTUP:false}
 
 # AWS S3 Configuration
 aws:
@@ -80,6 +81,8 @@ aws:
     bucket: nexfit-media-prod
     enabled: true
     presigned-url-expiry: 900  # 15 minutes
+    required: true
+    prefix: ${AWS_S3_PREFIX:dev}
   cloudfront:
     domain: ${AWS_CLOUDFRONT_DOMAIN:}
     enabled: false

@@ -9,11 +9,13 @@ import org.example.nexfit.model.request.TrainerCertificateCreateRequest;
 import org.example.nexfit.model.request.TrainerCertificateUploadUrlRequest;
 import org.example.nexfit.model.request.TrainerMediaCreateRequest;
 import org.example.nexfit.model.request.TrainerMediaUploadUrlRequest;
+import org.example.nexfit.model.request.TrainerProfileImageUploadUrlRequest;
 import org.example.nexfit.model.request.TrainerProfileCreateRequest;
 import org.example.nexfit.model.request.TrainerProfileUpdateRequest;
 import org.example.nexfit.model.response.TrainerProfileResponse;
 import org.example.nexfit.model.response.TrainerUploadUrlResponse;
 import org.example.nexfit.service.TrainerCertificateService;
+import org.example.nexfit.service.TrainerProfileImageService;
 import org.example.nexfit.service.TrainerProfileMediaService;
 import org.example.nexfit.service.TrainerProfileService;
 import org.springframework.http.HttpStatus;
@@ -32,6 +34,7 @@ public class TrainerProfileController {
     private final TrainerProfileService trainerProfileService;
     private final TrainerCertificateService trainerCertificateService;
     private final TrainerProfileMediaService trainerProfileMediaService;
+    private final TrainerProfileImageService trainerProfileImageService;
 
     @GetMapping("/profile")
     @Operation(summary = "Get current trainer profile")
@@ -48,6 +51,24 @@ public class TrainerProfileController {
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 trainerProfileService.createProfile(trainer.getId(), request)
         );
+    }
+
+    @PostMapping("/profile-image/upload-url")
+    @Operation(summary = "Get signed URL for profile image upload")
+    public ResponseEntity<TrainerUploadUrlResponse> getProfileImageUploadUrl(
+            @AuthenticationPrincipal Trainer trainer,
+            @Valid @RequestBody TrainerProfileImageUploadUrlRequest request
+    ) {
+        return ResponseEntity.ok(trainerProfileImageService.generateProfileImageUploadUrl(trainer.getId(), request));
+    }
+
+    @PostMapping("/cover-image/upload-url")
+    @Operation(summary = "Get signed URL for cover image upload")
+    public ResponseEntity<TrainerUploadUrlResponse> getCoverImageUploadUrl(
+            @AuthenticationPrincipal Trainer trainer,
+            @Valid @RequestBody TrainerProfileImageUploadUrlRequest request
+    ) {
+        return ResponseEntity.ok(trainerProfileImageService.generateCoverImageUploadUrl(trainer.getId(), request));
     }
 
     @PatchMapping("/profile")
@@ -122,5 +143,12 @@ public class TrainerProfileController {
     public ResponseEntity<Map<String, String>> submitProfile(@AuthenticationPrincipal Trainer trainer) {
         TrainerProfileResponse response = trainerProfileService.submitProfile(trainer.getId());
         return ResponseEntity.ok(Map.of("status", response.getStatus()));
+    }
+
+    @GetMapping("/status")
+    @Operation(summary = "Get trainer profile status")
+    public ResponseEntity<Map<String, String>> getStatus(@AuthenticationPrincipal Trainer trainer) {
+        String status = trainer.getStatus() != null ? trainer.getStatus().name().toLowerCase() : "draft";
+        return ResponseEntity.ok(Map.of("status", status));
     }
 }

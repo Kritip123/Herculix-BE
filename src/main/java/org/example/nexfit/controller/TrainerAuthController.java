@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.nexfit.exception.BusinessException;
 import org.example.nexfit.model.request.TrainerAuthRequest;
 import org.example.nexfit.model.response.TrainerAuthResponse;
 import org.example.nexfit.service.TrainerAuthService;
@@ -29,5 +30,16 @@ public class TrainerAuthController {
     @Operation(summary = "Trainer login")
     public ResponseEntity<TrainerAuthResponse> login(@Valid @RequestBody TrainerAuthRequest.LoginRequest request) {
         return ResponseEntity.ok(trainerAuthService.login(request));
+    }
+
+    @PostMapping("/logout")
+    @Operation(summary = "Trainer logout")
+    public ResponseEntity<Void> logout(@RequestHeader("Authorization") String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new BusinessException("Invalid Authorization header");
+        }
+        String token = authHeader.substring(7); // Remove "Bearer " prefix
+        trainerAuthService.logout(token);
+        return ResponseEntity.noContent().build();
     }
 }
