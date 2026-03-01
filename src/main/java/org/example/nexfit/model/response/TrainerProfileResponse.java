@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -34,6 +35,13 @@ public class TrainerProfileResponse {
         private String email;
         private String phone;
         private String city;
+        private String address;
+        private String state;
+        private String country;
+        private Double latitude;
+        private Double longitude;
+        private BigDecimal hourlyRate;
+        private String gymAffiliation;
         private String headline;
         private String bio;
         private String profileImage;

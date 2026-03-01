@@ -20,3 +20,9 @@ launchdarkly:
 media:
   sync:
     on-startup: ${MEDIA_SYNC_ON_STARTUP:false}
+
+ai:
+  provider: ${AI_PROVIDER:gemini}
+  gemini:
+    api-key: ${GEMINI_API_KEY}
+    model: ${GEMINI_MODEL:gemini-flash-latest}

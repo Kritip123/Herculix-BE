@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -32,6 +33,13 @@ public class TrainerProfileUpdateRequest {
 
         private String phone;
         private String city;
+        private String address;
+        private String state;
+        private String country;
+        private Double latitude;
+        private Double longitude;
+        private BigDecimal hourlyRate;
+        private String gymAffiliation;
         private String headline;
         private String bio;
         private String profileImage;

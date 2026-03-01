@@ -63,6 +63,14 @@ app:
   currency: AUD
   support-email: support@nexfit.com.au
 
+ai:
+  provider: ${AI_PROVIDER:gemini}
+  grok:
+    api-key: ${GROK_API_KEY:}
+  gemini:
+    api-key: ${GEMINI_API_KEY:}
+    model: ${GEMINI_MODEL:gemini-flash-latest}
+
 launchdarkly:
   enabled: ${LAUNCHDARKLY_ENABLED:false}
   sdk-key: ${LAUNCHDARKLY_SDK_KEY:}
@@ -79,9 +87,9 @@ aws:
   secret-key: ${AWS_SECRET_KEY:}
   s3:
     bucket: nexfit-media-prod
-    enabled: true
+    enabled: ${AWS_S3_ENABLED:true}
     presigned-url-expiry: 900  # 15 minutes
-    required: true
+    required: ${AWS_S3_REQUIRED:false}
     prefix: ${AWS_S3_PREFIX:dev}
   cloudfront:
     domain: ${AWS_CLOUDFRONT_DOMAIN:}

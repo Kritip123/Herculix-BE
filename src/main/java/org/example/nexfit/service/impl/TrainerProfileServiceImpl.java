@@ -102,6 +102,27 @@ public class TrainerProfileServiceImpl implements TrainerProfileService {
             if (profile.getLanguages() != null) {
                 trainer.setLanguages(new HashSet<>(profile.getLanguages()));
             }
+            if (profile.getHourlyRate() != null) {
+                trainer.setHourlyRate(profile.getHourlyRate());
+            }
+            if (profile.getAddress() != null) {
+                trainer.setAddress(profile.getAddress());
+            }
+            if (profile.getState() != null) {
+                trainer.setState(profile.getState());
+            }
+            if (profile.getCountry() != null) {
+                trainer.setCountry(profile.getCountry());
+            }
+            if (profile.getLatitude() != null) {
+                trainer.setLatitude(profile.getLatitude());
+            }
+            if (profile.getLongitude() != null) {
+                trainer.setLongitude(profile.getLongitude());
+            }
+            if (profile.getGymAffiliation() != null) {
+                trainer.setGymAffiliation(profile.getGymAffiliation());
+            }
             if (profile.getPricing() != null && profile.getPricing().getMonthlySubscriptionUSD() != null) {
                 if (!Objects.equals(profile.getPricing().getMonthlySubscriptionUSD(), REQUIRED_PRICE_USD)) {
                     throw new BusinessException("Monthly subscription must be $1");
@@ -182,6 +203,13 @@ public class TrainerProfileServiceImpl implements TrainerProfileService {
                         .email(trainer.getEmail())
                         .phone(trainer.getPhone())
                         .city(trainer.getCity())
+                        .address(trainer.getAddress())
+                        .state(trainer.getState())
+                        .country(trainer.getCountry())
+                        .latitude(trainer.getLatitude())
+                        .longitude(trainer.getLongitude())
+                        .hourlyRate(trainer.getHourlyRate())
+                        .gymAffiliation(trainer.getGymAffiliation())
                         .headline(trainer.getHeadline())
                         .bio(trainer.getBio())
                         .profileImage(trainer.getProfileImage())
