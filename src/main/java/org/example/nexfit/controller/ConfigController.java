@@ -155,7 +155,11 @@ public class ConfigController {
         settings.put("country", "Australia");
 
         // Add supported languages
-        settings.put("languages", List.of("English", "Mandarin", "Spanish", "Arabic", "Vietnamese", "Italian", "Greek"));
+        settings.put("languages", List.of(
+                "English", "Mandarin", "Cantonese", "Spanish", "Arabic",
+                "Vietnamese", "Italian", "Greek", "Hindi", "Korean",
+                "Japanese", "French", "German", "Portuguese", "Tagalog",
+                "Thai", "Indonesian", "Turkish", "Persian", "Samoan"));
 
         // Add feature flags
         settings.put("features", Map.of(

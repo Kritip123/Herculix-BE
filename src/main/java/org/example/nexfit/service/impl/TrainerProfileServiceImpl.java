@@ -172,7 +172,6 @@ public class TrainerProfileServiceImpl implements TrainerProfileService {
                 isBlank(trainer.getPhone()) ||
                 isBlank(trainer.getCity()) ||
                 isBlank(trainer.getHeadline()) ||
-                isBlank(trainer.getBio()) ||
                 trainer.getSpecializations() == null || trainer.getSpecializations().isEmpty() ||
                 trainer.getLanguages() == null || trainer.getLanguages().isEmpty() ||
                 trainer.getYearsActive() == null) {

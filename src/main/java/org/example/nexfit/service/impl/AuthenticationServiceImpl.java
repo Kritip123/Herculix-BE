@@ -33,6 +33,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final EmailService emailService;
     
     @Override
+    public boolean emailExists(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
+    @Override
     public AuthResponse register(AuthRequest.RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new BusinessException("Email already registered");

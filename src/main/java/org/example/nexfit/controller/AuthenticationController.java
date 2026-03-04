@@ -22,6 +22,13 @@ public class AuthenticationController {
     
     private final AuthenticationService authenticationService;
     
+    @GetMapping("/check-email")
+    @Operation(summary = "Check if email is already registered")
+    public ResponseEntity<Map<String, Boolean>> checkEmail(@RequestParam String email) {
+        boolean exists = authenticationService.emailExists(email);
+        return ResponseEntity.ok(Map.of("exists", exists));
+    }
+
     @PostMapping("/register")
     @Operation(summary = "Register a new user")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody AuthRequest.RegisterRequest request) {

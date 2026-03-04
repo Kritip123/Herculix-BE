@@ -4,6 +4,8 @@ import org.example.nexfit.model.request.AuthRequest;
 import org.example.nexfit.model.response.AuthResponse;
 
 public interface AuthenticationService {
+
+    boolean emailExists(String email);
     
     AuthResponse register(AuthRequest.RegisterRequest request);
     
