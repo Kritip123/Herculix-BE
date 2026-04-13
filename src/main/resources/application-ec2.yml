@@ -2,7 +2,7 @@ spring:
   data:
     mongodb:
       uri: ${MONGODB_URI}
-      database: ${MONGODB_DATABASE:nexfit}
+      database: ${MONGODB_DATABASE:herculix}
       auto-index-creation: true
 
 server:

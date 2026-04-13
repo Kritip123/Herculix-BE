@@ -1,20 +1,20 @@
 spring:
   application:
-    name: NexFit-BE
+    name: Herculix-BE
 
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:local}
 
   data:
     mongodb:
-      uri: ${MONGODB_URI:mongodb://localhost:27017/nexfit}
-      database: ${MONGODB_DATABASE:nexfit}
+      uri: ${MONGODB_URI:mongodb://localhost:27017/herculix}
+      database: ${MONGODB_DATABASE:herculix}
       auto-index-creation: true
 
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${EMAIL_USERNAME:support@nexfit.com.au}
+    username: ${EMAIL_USERNAME:support@herculix.com.au}
     password: ${EMAIL_PASSWORD:}
     properties:
       mail:
@@ -46,7 +46,7 @@ server:
     min-response-size: 1024
 
 jwt:
-  secret: ${JWT_SECRET}
+  secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
   expiration: ${JWT_EXPIRATION:86400000}  # 24 hours
   refresh:
     expiration: ${JWT_REFRESH_EXPIRATION:604800000}  # 7 days
@@ -61,7 +61,7 @@ cors:
 
 app:
   currency: AUD
-  support-email: support@nexfit.com.au
+  support-email: support@herculix.com.au
 
 ai:
   provider: ${AI_PROVIDER:gemini}
@@ -86,7 +86,7 @@ aws:
   access-key: ${AWS_ACCESS_KEY:}
   secret-key: ${AWS_SECRET_KEY:}
   s3:
-    bucket: nexfit-media-prod
+    bucket: herculix-media-prod
     enabled: ${AWS_S3_ENABLED:true}
     presigned-url-expiry: 900  # 15 minutes
     required: ${AWS_S3_REQUIRED:false}
@@ -119,14 +119,14 @@ management:
 logging:
   level:
     root: ${LOG_LEVEL_ROOT:INFO}
-    org.example.nexfit: ${LOG_LEVEL_APP:DEBUG}
+    org.example.herculix: ${LOG_LEVEL_APP:DEBUG}
     org.springframework.data.mongodb.core.MongoTemplate: ${LOG_LEVEL_MONGO:INFO}
     software.amazon.awssdk: ${LOG_LEVEL_AWS:WARN}
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
   file:
-    name: logs/nexfit.log
+    name: logs/herculix.log
     max-size: 10MB
     max-history: 30
 

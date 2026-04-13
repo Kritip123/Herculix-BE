@@ -3,19 +3,19 @@ version: '3.8'
 services:
   mongodb:
     image: mongo:7.0
-    container_name: nexfit-mongodb
+    container_name: herculix-mongodb
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin123
-      MONGO_INITDB_DATABASE: nexfit
+      MONGO_INITDB_DATABASE: herculix
     ports:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
     networks:
-      - nexfit-network
+      - herculix-network
     healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/nexfit --quiet
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/herculix --quiet
       interval: 10s
       timeout: 5s
       retries: 5
@@ -24,7 +24,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: nexfit-app
+    container_name: herculix-app
     depends_on:
       mongodb:
         condition: service_healthy
@@ -32,13 +32,13 @@ services:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATA_MONGODB_URI: mongodb://admin:admin123@mongodb:27017/nexfit?authSource=admin
+      SPRING_DATA_MONGODB_URI: mongodb://admin:admin123@mongodb:27017/herculix?authSource=admin
       EMAIL_USERNAME: ${EMAIL_USERNAME}
       EMAIL_PASSWORD: ${EMAIL_PASSWORD}
       AWS_S3_ENABLED: ${AWS_S3_ENABLED:-true}
       AWS_ACCESS_KEY: ${AWS_ACCESS_KEY:-}
       AWS_SECRET_KEY: ${AWS_SECRET_KEY:-}
-      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-nexfit-media-dev}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-herculix-media-dev}
       AWS_S3_PREFIX: ${AWS_S3_PREFIX:-dev}
       AWS_REGION: ${AWS_REGION:-ap-southeast-2}
       LAUNCHDARKLY_ENABLED: ${LAUNCHDARKLY_ENABLED:-true}
@@ -48,10 +48,10 @@ services:
     volumes:
       - ./uploads:/app/uploads
     networks:
-      - nexfit-network
+      - herculix-network
 
 networks:
-  nexfit-network:
+  herculix-network:
     driver: bridge
 
 volumes:

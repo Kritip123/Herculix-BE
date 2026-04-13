@@ -1,4 +1,4 @@
-# NexFit Backend - Complete Summary
+# Herculix Backend - Complete Summary
 
 ## ✅ Implementation Status
 
@@ -21,8 +21,8 @@
 ## 📁 Project Structure
 
 ```
-NexFit/
-├── src/main/java/org/example/trainerhub/
+Herculix/
+├── src/main/java/org/example/herculix/
 │   ├── config/              # Configuration classes
 │   │   ├── AsyncConfig.java
 │   │   ├── RedisConfig.java
@@ -132,7 +132,7 @@ NexFit/
 
 1. **Clone and navigate to project**
 ```bash
-cd NexFit
+cd Herculix
 ```
 
 2. **Create .env file**

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚀 NexFit Backend - Quick Start"
+echo "🚀 Herculix Backend - Quick Start"
 echo "===================================="
 echo ""
 

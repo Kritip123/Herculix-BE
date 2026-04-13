@@ -1,4 +1,4 @@
-# NexFit Backend v2 Deployment (EC2 + Mongo Atlas + S3 + LaunchDarkly)
+# Herculix Backend v2 Deployment (EC2 + Mongo Atlas + S3 + LaunchDarkly)
 
 This guide deploys the backend to EC2 using MongoDB Atlas, S3, and LaunchDarkly.
 
@@ -28,23 +28,23 @@ Build locally:
 ```
 Copy to EC2:
 ```bash
-scp target/*.jar ubuntu@<EC2_PUBLIC_IP>:/opt/nexfit/nexfit.jar
+scp target/*.jar ubuntu@<EC2_PUBLIC_IP>:/opt/herculix/herculix.jar
 ```
 
 ## 5) Create environment file
 ```bash
-sudo mkdir -p /opt/nexfit
-sudo tee /opt/nexfit/.env >/dev/null <<'EOF'
+sudo mkdir -p /opt/herculix
+sudo tee /opt/herculix/.env >/dev/null <<'EOF'
 SPRING_PROFILES_ACTIVE=ec2
 SERVER_PORT=8080
 
 MONGODB_URI=mongodb+srv://<user>:<pass>@<cluster>/<db>?retryWrites=true&w=majority
-MONGODB_DATABASE=nexfit
+MONGODB_DATABASE=herculix
 
 AWS_S3_ENABLED=true
 AWS_ACCESS_KEY=...
 AWS_SECRET_KEY=...
-AWS_S3_BUCKET=nexfit-media-prod
+AWS_S3_BUCKET=herculix-media-prod
 AWS_S3_PREFIX=prod
 AWS_REGION=ap-southeast-2
 
@@ -61,15 +61,15 @@ EOF
 
 ## 6) Create systemd service
 ```bash
-sudo tee /etc/systemd/system/nexfit.service >/dev/null <<'EOF'
+sudo tee /etc/systemd/system/herculix.service >/dev/null <<'EOF'
 [Unit]
-Description=NexFit Backend v2
+Description=Herculix Backend v2
 After=network.target
 
 [Service]
-WorkingDirectory=/opt/nexfit
-EnvironmentFile=/opt/nexfit/.env
-ExecStart=/usr/bin/java -jar /opt/nexfit/nexfit.jar
+WorkingDirectory=/opt/herculix
+EnvironmentFile=/opt/herculix/.env
+ExecStart=/usr/bin/java -jar /opt/herculix/herculix.jar
 Restart=always
 RestartSec=5
 User=ubuntu
@@ -82,9 +82,9 @@ EOF
 Enable and start:
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable nexfit
-sudo systemctl start nexfit
-sudo systemctl status nexfit
+sudo systemctl enable herculix
+sudo systemctl start herculix
+sudo systemctl status herculix
 ```
 
 ## 7) Verify
@@ -104,8 +104,8 @@ EXPO_PUBLIC_API_BASE_URL=http://<EC2_PUBLIC_IP>:8080/api/v1
 ## 10) Rollback
 Keep the previous jar and switch back:
 ```bash
-sudo systemctl stop nexfit
-sudo mv /opt/nexfit/nexfit.jar /opt/nexfit/nexfit.jar.v2
-sudo mv /opt/nexfit/nexfit.jar.v1 /opt/nexfit/nexfit.jar
-sudo systemctl start nexfit
+sudo systemctl stop herculix
+sudo mv /opt/herculix/herculix.jar /opt/herculix/herculix.jar.v2
+sudo mv /opt/herculix/herculix.jar.v1 /opt/herculix/herculix.jar
+sudo systemctl start herculix
 ```

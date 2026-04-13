@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>org.example</groupId>
-    <artifactId>nexfit-be</artifactId>
+    <artifactId>herculix-be</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>NexFit-BE</name>
-    <description>NexFit Backend - Fitness Trainer Platform</description>
+    <name>Herculix-BE</name>
+    <description>Herculix Backend - Fitness Trainer Platform</description>
     <url/>
     <licenses>
         <license/>

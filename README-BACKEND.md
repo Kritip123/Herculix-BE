@@ -1,8 +1,8 @@
-# NexFit Backend - Spring Boot Application
+# Herculix Backend - Spring Boot Application
 
 ## 📋 Overview
 
-NexFit is a comprehensive fitness trainer marketplace application built for the Australian market. The backend is built with Spring Boot following MVC architecture with proper design patterns, scalability considerations, and comprehensive API coverage.
+Herculix is a comprehensive fitness trainer marketplace application built for the Australian market. The backend is built with Spring Boot following MVC architecture with proper design patterns, scalability considerations, and comprehensive API coverage.
 
 ## 🚀 Technology Stack
 
@@ -176,7 +176,7 @@ LAUNCHDARKLY_FLAG_KEY=verified-trainers
 1. **Clone the repository**
 ```bash
 git clone <repository-url>
-cd NexFit
+cd Herculix
 ```
 
 2. **Start all services**
